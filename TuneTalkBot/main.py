@@ -1,8 +1,7 @@
 import os
 from flask import Flask, request
 from telegram import Update, Bot
-from telegram.ext import CommandHandler, MessageHandler, Application, CallbackContext
-from telegram.ext import filters
+from telegram.ext import CommandHandler, Application, CallbackContext
 from gtts import gTTS
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -50,8 +49,13 @@ def main():
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
 
-    # Run the bot in a separate thread
-    app_bot.run_polling()
+    # Configure webhook
+    app_bot.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", 8443)),
+        url_path="",  # Optional, leave empty for default
+        webhook_url="https://your-render-url.com/"  # Replace with your Render URL
+    )
 
 # Flask route to keep Render pinging service alive
 @app.route("/")
