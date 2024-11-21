@@ -2,7 +2,7 @@ import os
 from flask import Flask, request
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, MessageHandler, Application, CallbackContext
-from telegram import filters
+from telegram.ext import filters
 from gtts import gTTS
 from apscheduler.schedulers.background import BackgroundScheduler
 
