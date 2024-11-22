@@ -121,9 +121,9 @@ def main():
     )
 
 # Flask route to keep Render pinging service alive
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return "Bot is running!"
+    return "Bot is running!", 200
 
 @app.route("/ping")
 def ping():
