@@ -40,7 +40,7 @@ async def start(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     await update.message.reply_text(
-        "Hi! I’m TuneTalk Bot, and I'm here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
+        "Hi! I’m TuneTalkBot, and I'm here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
     )
 
 # Function to handle pronunciation requests
@@ -121,9 +121,9 @@ def main():
     )
 
 # Flask route to keep Render pinging service alive
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return "Bot is running!"
+    return "Bot is running!", 200
 
 @app.route("/ping")
 def ping():
