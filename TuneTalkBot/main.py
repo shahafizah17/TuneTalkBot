@@ -1,12 +1,12 @@
 import os
 from flask import Flask, request
 from telegram import Update, Bot
-from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
+from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 from gtts import gTTS
 from apscheduler.schedulers.background import BackgroundScheduler
-import json
+import json  # To store chat IDs
 
-# Flask app
+# Flask app for the HTTP endpoint
 app = Flask(__name__)
 
 # Load environment variables
@@ -35,17 +35,18 @@ def track_user(chat_id):
         chat_ids.append(chat_id)
         save_chat_ids(chat_ids)
 
-# Telegram bot commands
+# Command to greet users
 async def start(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
-    track_user(chat_id)
+    track_user(chat_id)  # Track the user's chat ID
     await update.message.reply_text(
-        "Hi! I’m TuneTalk Bot, and I'm here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
+        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
     )
 
+# Function to handle pronunciation requests
 async def pronounce(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
-    track_user(chat_id)
+    track_user(chat_id)  # Track the user's chat ID
     text = " ".join(context.args)
     if not text:
         await update.message.reply_text(
@@ -54,35 +55,46 @@ async def pronounce(update: Update, context: CallbackContext):
         return
 
     try:
+        # Generate audio using British English
         tts = gTTS(text=text, lang="en", tld="co.uk", slow=False)
         audio_file = f"{text}.mp3"
         tts.save(audio_file)
+
+        # Send audio to the user
         with open(audio_file, "rb") as audio:
             await update.message.reply_audio(audio)
-        os.remove(audio_file)
+
+        os.remove(audio_file)  # Clean up file after sending
     except Exception as e:
         await update.message.reply_text(f"Sorry, an error occurred: {e}")
 
+# Function to handle pronunciation tips
 async def tips(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
-    track_user(chat_id)
+    track_user(chat_id)  # Track the user's chat ID
     tips_text = (
         "Here are some tips for common pronunciation challenges:\n\n"
         "1. **'th' sound**: \n"
-        "   - 'th' in 'think' is unvoiced (tongue between teeth, blow air).\n"
-        "   - 'th' in 'this' is voiced (same position, use vocal cords).\n\n"
+        "   - 'th' in 'think' is unvoiced (place your tongue between your teeth and blow air).\n"
+        "   - 'th' in 'this' is voiced (same position, but use your vocal cords).\n\n"
         "2. **'v' vs 'w' sounds**:\n"
-        "   - 'v' in 'van': upper teeth lightly touch lower lip.\n"
-        "   - 'w' in 'win': round your lips without touching teeth.\n\n"
-        "3. **Silent letters**: Don't pronounce the 'k' in 'knife' or 'b' in 'comb'.\n\n"
-        "4. **'r' sound**: In British English, it's soft (e.g., 'car').\n\n"
-        "Practice these regularly!"
+        "   - 'v' in 'van': upper teeth touch the lower lip lightly while vibrating.\n"
+        "   - 'w' in 'win': round your lips without touching the teeth.\n\n"
+        "3. **Silent letters**:\n"
+        "   - Don't pronounce the 'k' in 'knife' or the 'b' in 'comb'.\n\n"
+        "4. **'r' sound**:\n"
+        "   - Avoid rolling the 'r' too much. In British English, it’s often soft, especially at the end of words like 'car'.\n\n"
+        "Practice these regularly to improve!"
     )
     await update.message.reply_text(tips_text)
 
-# Function to send daily tips to users
+# Function to send tips to all tracked users
 def send_daily_tips():
-    tips_text = "Daily Pronunciation Tip:\n\nPractice the **'th' sound** today!"
+    tips_text = (
+        "Daily Pronunciation Tip:\n\n"
+        "Practice the **'th' sound** today! Unvoiced 'th' (e.g., 'think') requires blowing air gently. "
+        "Voiced 'th' (e.g., 'this') requires using your vocal cords. Keep practicing!"
+    )
     chat_ids = load_chat_ids()
     for chat_id in chat_ids:
         try:
@@ -90,41 +102,42 @@ def send_daily_tips():
         except Exception as e:
             print(f"Error sending tip to {chat_id}: {e}")
 
-# Flask routes
-@app.route("/", methods=["GET", "POST", "HEAD"])
-def home():
-    return "Bot is running!", 200
+# Initialize Telegram bot handlers
+def main():
+    app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    json_str = request.get_data().decode("UTF-8")
-    update = Update.de_json(json.loads(json_str), bot)
-    app_bot.process_update(update)
-    return "ok", 200
+    # Add handlers
+    app_bot.add_handler(CommandHandler("start", start))
+    app_bot.add_handler(CommandHandler("pronounce", pronounce))
+    app_bot.add_handler(CommandHandler("tips", tips))
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
-@app.route("/ping")
-def ping():
-    return "pong", 200
-
-# Scheduler to keep bot alive
-def keep_alive():
-    bot.get_me()
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(keep_alive, "interval", minutes=5)
-scheduler.add_job(send_daily_tips, "interval", hours=24)
-scheduler.start()
-
-# Initialize Telegram handlers
-app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
-app_bot.add_handler(CommandHandler("start", start))
-app_bot.add_handler(CommandHandler("pronounce", pronounce))
-app_bot.add_handler(CommandHandler("tips", tips))
-
-# Main function to start the bot
-if __name__ == "__main__":
+    # Configure webhook
     app_bot.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 8443)),
-        webhook_url="https://tunetalkbot.onrender.com/webhook"
+        url_path="",  # Optional, leave empty for default
+        webhook_url="https://tunetalkbot.onrender.com"  # Replace with your Render URL
     )
+
+# Flask route to keep Render pinging service alive
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+@app.route("/ping")
+def ping():
+    return "pong"
+
+# Keep bot alive with a scheduler
+def keep_alive():
+    bot.get_me()
+
+# Schedule daily tips
+scheduler = BackgroundScheduler()
+scheduler.add_job(keep_alive, "interval", minutes=5)
+scheduler.add_job(send_daily_tips, "interval", hours=24)  # Send tips daily
+scheduler.start()
+
+if __name__ == "__main__":
+    main()
