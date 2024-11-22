@@ -15,7 +15,7 @@ bot = Bot(token=TELEGRAM_TOKEN)
 # Command to greet users
 async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(
-        "Hi! I’m TuneTalkBot, and I'm here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation!"
+        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
     )
 
 # Function to handle pronunciation requests
@@ -41,6 +41,25 @@ async def pronounce(update: Update, context: CallbackContext):
     except Exception as e:
         await update.message.reply_text(f"Sorry, an error occurred: {e}")
 
+# Function to handle pronunciation tips
+async def tips(update: Update, context: CallbackContext):
+    # Tips on pronunciation challenges for Malaysian ESL learners
+    tips_text = (
+        "Here are some tips for common pronunciation challenges:\n\n"
+        "1. **'th' sound**: \n"
+        "   - 'th' in 'think' is unvoiced (place your tongue between your teeth and blow air).\n"
+        "   - 'th' in 'this' is voiced (same position, but use your vocal cords).\n\n"
+        "2. **'v' vs 'w' sounds**:\n"
+        "   - 'v' in 'van': upper teeth touch the lower lip lightly while vibrating.\n"
+        "   - 'w' in 'win': round your lips without touching the teeth.\n\n"
+        "3. **Silent letters**:\n"
+        "   - Don't pronounce the 'k' in 'knife' or the 'b' in 'comb'.\n\n"
+        "4. **'r' sound**:\n"
+        "   - Avoid rolling the 'r' too much. In British English, it’s often soft, especially at the end of words like 'car'.\n\n"
+        "Practice these regularly to improve!"
+    )
+    await update.message.reply_text(tips_text)
+
 # Initialize Telegram bot handlers
 def main():
     app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -48,6 +67,7 @@ def main():
     # Add handlers
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
+    app_bot.add_handler(CommandHandler("tips", tips))  # New tips handler
 
     # Configure webhook
     app_bot.run_webhook(
