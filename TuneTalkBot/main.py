@@ -112,16 +112,24 @@ def main():
     app_bot.add_handler(CommandHandler("tips", tips))
     app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
-    # Configure webhook
+    # Set webhook for Telegram
     app_bot.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 8443)),
-        url_path="",  # Optional, leave empty for default
-        webhook_url="https://tunetalkbot.onrender.com"  # Replace with your Render URL
+        url_path="",
+        webhook_url="https://tunetalkbot.onrender.com/"  # Replace with your Render URL
     )
 
+# Flask route to handle Telegram webhook
+@app.route("/" , methods=["POST"])
+def webhook():
+    json_str = request.get_data().decode("UTF-8")
+    update = Update.de_json(json.loads(json_str), bot)
+    app_bot.process_update(update)
+    return "ok", 200
+
 # Flask route to keep Render pinging service alive
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def home():
     return "Bot is running!", 200
 
