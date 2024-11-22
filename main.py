@@ -1,9 +1,10 @@
 import os
 from flask import Flask, request
 from telegram import Update, Bot
-from telegram.ext import CommandHandler, Application, CallbackContext
+from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 from gtts import gTTS
 from apscheduler.schedulers.background import BackgroundScheduler
+import json  # To store chat IDs
 
 # Flask app for the HTTP endpoint
 app = Flask(__name__)
@@ -12,14 +13,40 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "7654820492:AAGpULuFlQ3FDl5Gc95fPY0iV02lAoPJ9Do"
 bot = Bot(token=TELEGRAM_TOKEN)
 
+# File to store user chat IDs
+CHAT_IDS_FILE = "chat_ids.json"
+
+# Helper function to load chat IDs from file
+def load_chat_ids():
+    if os.path.exists(CHAT_IDS_FILE):
+        with open(CHAT_IDS_FILE, "r") as file:
+            return json.load(file)
+    return []
+
+# Helper function to save chat IDs to file
+def save_chat_ids(chat_ids):
+    with open(CHAT_IDS_FILE, "w") as file:
+        json.dump(chat_ids, file)
+
+# Track user chat IDs
+def track_user(chat_id):
+    chat_ids = load_chat_ids()
+    if chat_id not in chat_ids:
+        chat_ids.append(chat_id)
+        save_chat_ids(chat_ids)
+
 # Command to greet users
 async def start(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    track_user(chat_id)  # Track the user's chat ID
     await update.message.reply_text(
         "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips."
     )
 
 # Function to handle pronunciation requests
 async def pronounce(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    track_user(chat_id)  # Track the user's chat ID
     text = " ".join(context.args)
     if not text:
         await update.message.reply_text(
@@ -43,7 +70,8 @@ async def pronounce(update: Update, context: CallbackContext):
 
 # Function to handle pronunciation tips
 async def tips(update: Update, context: CallbackContext):
-    # Tips on pronunciation challenges for Malaysian ESL learners
+    chat_id = update.message.chat_id
+    track_user(chat_id)  # Track the user's chat ID
     tips_text = (
         "Here are some tips for common pronunciation challenges:\n\n"
         "1. **'th' sound**: \n"
@@ -60,6 +88,20 @@ async def tips(update: Update, context: CallbackContext):
     )
     await update.message.reply_text(tips_text)
 
+# Function to send tips to all tracked users
+def send_daily_tips():
+    tips_text = (
+        "Daily Pronunciation Tip:\n\n"
+        "Practice the **'th' sound** today! Unvoiced 'th' (e.g., 'think') requires blowing air gently. "
+        "Voiced 'th' (e.g., 'this') requires using your vocal cords. Keep practicing!"
+    )
+    chat_ids = load_chat_ids()
+    for chat_id in chat_ids:
+        try:
+            bot.send_message(chat_id=chat_id, text=tips_text)
+        except Exception as e:
+            print(f"Error sending tip to {chat_id}: {e}")
+
 # Initialize Telegram bot handlers
 def main():
     app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -67,7 +109,8 @@ def main():
     # Add handlers
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
-    app_bot.add_handler(CommandHandler("tips", tips))  # New tips handler
+    app_bot.add_handler(CommandHandler("tips", tips))
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
     # Configure webhook
     app_bot.run_webhook(
@@ -90,8 +133,10 @@ def ping():
 def keep_alive():
     bot.get_me()
 
+# Schedule daily tips
 scheduler = BackgroundScheduler()
 scheduler.add_job(keep_alive, "interval", minutes=5)
+scheduler.add_job(send_daily_tips, "interval", hours=24)  # Send tips daily
 scheduler.start()
 
 if __name__ == "__main__":
