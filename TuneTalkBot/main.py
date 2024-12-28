@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 from gtts import gTTS
@@ -79,28 +79,49 @@ async def tips(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     tips_text = (
-        "Here are 20 tips for common pronunciation challenges among ESL speakers:\n\n"
-        "1. **'th' sound**: Unvoiced 'th' in 'think' is soft; voiced 'th' in 'this' uses vocal cords.\n"
-        "2. **'v' vs 'w' sounds**: 'v' vibrates, while 'w' requires rounded lips.\n"
-        "3. **Silent letters**: Avoid pronouncing silent letters, like 'k' in 'know' or 'b' in 'thumb'.\n"
-        "4. **Final 'ed' sound**: Pronounce 'ed' in 'wanted' as /ɪd/, but 'played' as /d/.\n"
-        "5. **'r' sound**: In British English, it's soft or silent at the end of words like 'car'.\n"
-        "6. **Linking words**: British English links 'r' between words ('law and order').\n"
-        "7. **Stress patterns**: Stress syllables correctly, e.g., 'PREsent' (noun) vs 'preSENT' (verb).\n"
-        "8. **'s' vs 'z' sounds**: 's' in 'see' is voiceless, while 'z' in 'zoo' is voiced.\n"
-        "9. **'ch' vs 'sh' sounds**: 'ch' in 'chair' is hard, while 'sh' in 'share' is softer.\n"
-        "10. **'t' sound**: In British English, 't' is often crisp, not replaced with 'd'.\n"
-        "11. **Vowel length**: Contrast long ('sheep') and short ('ship') vowels.\n"
-        "12. **Consonant clusters**: Avoid adding extra vowels in 'school' or 'spring'.\n"
-        "13. **'l' sound**: The 'l' in 'little' is darker when at the end of syllables.\n"
-        "14. **Intonation**: Use rising intonation for questions and falling for statements.\n"
-        "15. **Word endings**: Pronounce 's' or 'es' endings correctly in plurals ('cats' vs 'dogs').\n"
-        "16. **Weak vowels**: The schwa /ə/ sound is common in unstressed syllables ('about').\n"
-        "17. **'h' sound**: Don't drop 'h' in words like 'hat' unless it's silent ('honest').\n"
-        "18. **'j' sound**: Pronounce 'j' in 'jump' clearly, not confused with 'y'.\n"
-        "19. **Compound words**: Stress the first word in compounds like 'blackboard'.\n"
-        "20. **Rhythm**: English is stress-timed, meaning stressed syllables are equally spaced.\n\n"
-        "Practice these tips regularly to improve your pronunciation!"
+        "Here are some tips for common pronunciation challenges among ESL speakers:\n\n"
+        "1. **'th' sound**: \n"
+        "   - 'th' in 'think' is unvoiced (place your tongue between your teeth and blow air).\n"
+        "   - 'th' in 'this' is voiced (same position, but use your vocal cords).\n\n"
+        "2. **'v' vs 'w' sounds**:\n"
+        "   - 'v' in 'van': upper teeth touch the lower lip lightly while vibrating.\n"
+        "   - 'w' in 'win': round your lips without touching the teeth.\n\n"
+        "3. **Silent letters**:\n"
+        "   - Don't pronounce the 'k' in 'knife' or the 'b' in 'comb'.\n\n"
+        "4. **'r' sound**:\n"
+        "   - Avoid rolling the 'r' too much. In British English, it’s often soft, especially at the end of words like 'car'.\n\n"
+        "5. **Long and short vowels**:\n"
+        "   - Compare 'ship' (short vowel) and 'sheep' (long vowel). Lengthen the vowel for long sounds.\n\n"
+        "6. **Word stress**:\n"
+        "   - Place stress on the correct syllable, e.g., 'PREsent' (noun) vs. 'preSENT' (verb).\n\n"
+        "7. **'s' vs 'z' sounds**:\n"
+        "   - 's' is unvoiced as in 'snake'; 'z' is voiced as in 'zebra'.\n\n"
+        "8. **Dropping the final consonant**:\n"
+        "   - Avoid dropping final sounds, e.g., say 'cat' with the 't' sound.\n\n"
+        "9. **Linking words**:\n"
+        "   - Connect words smoothly, e.g., 'go on' becomes 'gwon'.\n\n"
+        "10. **Intonation**:\n"
+        "   - Use rising intonation for questions (e.g., 'Are you coming?').\n\n"
+        "11. **'l' vs 'r' sounds**:\n"
+        "   - 'l' as in 'lake' requires the tongue to touch the roof of the mouth. 'r' as in 'right' pulls the tongue back.\n\n"
+        "12. **Aspirated 'p', 't', 'k' sounds**:\n"
+        "   - Add a small burst of air for 'p' in 'pot', 't' in 'top', and 'k' in 'cat'.\n\n"
+        "13. **Consonant clusters**:\n"
+        "   - Practice groups like 'str' in 'street' and 'spl' in 'splash'.\n\n"
+        "14. **Schwa sound**:\n"
+        "   - The 'uh' sound in unstressed syllables, e.g., 'about'.\n\n"
+        "15. **Glottal stop**:\n"
+        "   - Common in British accents, replacing 't' in words like 'bottle'.\n\n"
+        "16. **'h' dropping**:\n"
+        "   - Don’t drop 'h' sounds unless it’s part of the accent, e.g., 'happy'.\n\n"
+        "17. **Double consonants**:\n"
+        "   - Hold the sound slightly longer, e.g., 'big game' (pause between 'g').\n\n"
+        "18. **'ing' endings**:\n"
+        "   - Say 'singing' with a soft 'g', not 'singin'.\n\n"
+        "19. **Homophones**:\n"
+        "   - Words like 'there', 'their', and 'they’re' sound the same but have different meanings.\n\n"
+        "20. **Practice minimal pairs**:\n"
+        "   - Compare words like 'bat' vs. 'pat' to hear subtle differences."
     )
     await update.message.reply_text(tips_text)
 
@@ -118,7 +139,7 @@ def main():
     app_bot.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 8443)),
-        url_path="",  # Optional, leave empty for default
+        url_path="",
         webhook_url="https://tunetalkbot.onrender.com"  # Replace with your Render URL
     )
 
@@ -126,6 +147,10 @@ def main():
 @app.route("/")
 def home():
     return "Bot is running!"
+
+@app.route("/ping")
+def ping():
+    return "pong"
 
 if __name__ == "__main__":
     main()
