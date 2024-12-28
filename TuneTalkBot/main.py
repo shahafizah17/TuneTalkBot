@@ -1,10 +1,8 @@
 import os
-from flask import Flask, request
+from flask import Flask
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 from gtts import gTTS
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
 import json  # To store chat IDs
 import logging  # For logging
 
@@ -81,7 +79,7 @@ async def tips(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     tips_text = (
-        "Here are some tips for common pronunciation challenges:\n\n"
+        "Here are some tips for common pronunciation challenges among ESL speakers:\n\n"
         "1. **'th' sound**: \n"
         "   - 'th' in 'think' is unvoiced (place your tongue between your teeth and blow air).\n"
         "   - 'th' in 'this' is voiced (same position, but use your vocal cords).\n\n"
@@ -92,24 +90,37 @@ async def tips(update: Update, context: CallbackContext):
         "   - Don't pronounce the 'k' in 'knife' or the 'b' in 'comb'.\n\n"
         "4. **'r' sound**:\n"
         "   - Avoid rolling the 'r' too much. In British English, it’s often soft, especially at the end of words like 'car'.\n\n"
-        "Practice these regularly to improve!"
+        "5. **'ed' endings**:\n"
+        "   - 'ed' is pronounced as /t/ in 'worked', /d/ in 'played', and /\u026ad/ in 'wanted'.\n\n"
+        "6. **Stress in words**:\n"
+        "   - Learn which syllable to stress, e.g., 'record' (noun: REcord, verb: reCORD).\n\n"
+        "7. **Schwa sound (/\u0259/)**:\n"
+        "   - The 'a' in 'sofa' and the 'e' in 'the' often sound like /\u0259/.\n\n"
+        "8. **'l' vs 'r' sounds**:\n"
+        "   - 'l' in 'lake' uses the tongue tip touching the roof of the mouth.\n"
+        "   - 'r' in 'rake' requires curving the tongue back without touching the roof.\n\n"
+        "9. **Linking sounds**:\n"
+        "   - In connected speech, 'go on' may sound like 'gowoan'.\n\n"
+        "10. **Intonation**:\n"
+        "    - Use rising intonation for questions and falling intonation for statements.\n\n"
+        "11. **'s' vs 'z' sounds**:\n"
+        "    - 's' in 'sit' is voiceless, while 'z' in 'zoo' is voiced.\n\n"
+        "12. **Diphthongs**:\n"
+        "    - Words like 'coin' and 'cake' contain two vowel sounds combined.\n\n"
+        "13. **Elision**:\n"
+        "    - Native speakers may drop sounds, e.g., 'friendship' sounds like 'frenship'.\n\n"
+        "14. **'t' sound variations**:\n"
+        "    - In 'butter', the 't' often sounds like a soft 'd' (flap t) in American English.\n\n"
+        "15. **'a' sounds**:\n"
+        "    - 'a' in 'cat' is short, while 'a' in 'car' is long.\n\n"
+        "16. **Minimal pairs practice**:\n"
+        "    - Practice pairs like 'ship' vs 'sheep' to improve vowel clarity.\n\n"
+        "17. **'j' vs 'y' sounds**:\n        "    - 'j' in 'juice' is harder than 'y' in 'yes', which is softer.\n\n"
+        "18. **Word endings**:\n        "    - Be careful with plurals like 'cats' (s) and 'dogs' (z).\n\n"
+        "19. **Contractions**:\n        "    - 'I am' becomes 'I'm'; practice these for natural flow.\n\n"
+        "20. **Practice with tongue twisters**:\n        "    - E.g., 'She sells sea shells by the sea shore'."
     )
     await update.message.reply_text(tips_text)
-
-# Function to send tips to all tracked users
-def send_daily_tips():
-    tips_text = (
-        "Daily Pronunciation Tip:\n\n"
-        "Practice the **'th' sound** today! Unvoiced 'th' (e.g., 'think') requires blowing air gently. "
-        "Voiced 'th' (e.g., 'this') requires using your vocal cords. Keep practicing!"
-    )
-    chat_ids = load_chat_ids()
-    for chat_id in chat_ids:
-        try:
-            bot.send_message(chat_id=chat_id, text=tips_text)
-            logger.info(f"Tip sent to {chat_id}")
-        except Exception as e:
-            logger.error(f"Error sending tip to {chat_id}: {e}")
 
 # Initialize Telegram bot handlers
 def main():
@@ -119,13 +130,13 @@ def main():
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
     app_bot.add_handler(CommandHandler("tips", tips))
-    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))
 
     # Configure webhook
     app_bot.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 8443)),
-        url_path="",  # Optional, leave empty for default
+        url_path="",
         webhook_url="https://tunetalkbot.onrender.com"  # Replace with your Render URL
     )
 
@@ -137,21 +148,6 @@ def home():
 @app.route("/ping")
 def ping():
     return "pong"
-
-# Keep bot alive with a scheduler
-def keep_alive():
-    bot.get_me()
-
-# Schedule daily tips
-scheduler = BackgroundScheduler()
-scheduler.add_job(keep_alive, "interval", minutes=5)
-
-# For immediate testing: Run `send_daily_tips` once at startup
-scheduler.add_job(send_daily_tips, "date", run_date=datetime.now() + timedelta(seconds=10))  # Runs 10 seconds after bot starts
-
-# For daily tips at a specific time (e.g., 8:00 AM UTC):
-scheduler.add_job(send_daily_tips, "cron", hour=8, minute=0)  # Adjust UTC time as needed
-scheduler.start()
 
 if __name__ == "__main__":
     main()
