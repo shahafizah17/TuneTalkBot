@@ -79,46 +79,28 @@ async def tips(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     tips_text = (
-        "Here are some tips for common pronunciation challenges among ESL speakers:\n\n"
-        "1. **'th' sound**: \n"
-        "   - 'th' in 'think' is unvoiced (place your tongue between your teeth and blow air).\n"
-        "   - 'th' in 'this' is voiced (same position, but use your vocal cords).\n\n"
-        "2. **'v' vs 'w' sounds**:\n"
-        "   - 'v' in 'van': upper teeth touch the lower lip lightly while vibrating.\n"
-        "   - 'w' in 'win': round your lips without touching the teeth.\n\n"
-        "3. **Silent letters**:\n"
-        "   - Don't pronounce the 'k' in 'knife' or the 'b' in 'comb'.\n\n"
-        "4. **'r' sound**:\n"
-        "   - Avoid rolling the 'r' too much. In British English, it’s often soft, especially at the end of words like 'car'.\n\n"
-        "5. **'ed' endings**:\n"
-        "   - 'ed' is pronounced as /t/ in 'worked', /d/ in 'played', and /\u026ad/ in 'wanted'.\n\n"
-        "6. **Stress in words**:\n"
-        "   - Learn which syllable to stress, e.g., 'record' (noun: REcord, verb: reCORD).\n\n"
-        "7. **Schwa sound (/\u0259/)**:\n"
-        "   - The 'a' in 'sofa' and the 'e' in 'the' often sound like /\u0259/.\n\n"
-        "8. **'l' vs 'r' sounds**:\n"
-        "   - 'l' in 'lake' uses the tongue tip touching the roof of the mouth.\n"
-        "   - 'r' in 'rake' requires curving the tongue back without touching the roof.\n\n"
-        "9. **Linking sounds**:\n"
-        "   - In connected speech, 'go on' may sound like 'gowoan'.\n\n"
-        "10. **Intonation**:\n"
-        "    - Use rising intonation for questions and falling intonation for statements.\n\n"
-        "11. **'s' vs 'z' sounds**:\n"
-        "    - 's' in 'sit' is voiceless, while 'z' in 'zoo' is voiced.\n\n"
-        "12. **Diphthongs**:\n"
-        "    - Words like 'coin' and 'cake' contain two vowel sounds combined.\n\n"
-        "13. **Elision**:\n"
-        "    - Native speakers may drop sounds, e.g., 'friendship' sounds like 'frenship'.\n\n"
-        "14. **'t' sound variations**:\n"
-        "    - In 'butter', the 't' often sounds like a soft 'd' (flap t) in American English.\n\n"
-        "15. **'a' sounds**:\n"
-        "    - 'a' in 'cat' is short, while 'a' in 'car' is long.\n\n"
-        "16. **Minimal pairs practice**:\n"
-        "    - Practice pairs like 'ship' vs 'sheep' to improve vowel clarity.\n\n"
-        "17. **'j' vs 'y' sounds**:\n        "    - 'j' in 'juice' is harder than 'y' in 'yes', which is softer.\n\n"
-        "18. **Word endings**:\n        "    - Be careful with plurals like 'cats' (s) and 'dogs' (z).\n\n"
-        "19. **Contractions**:\n        "    - 'I am' becomes 'I'm'; practice these for natural flow.\n\n"
-        "20. **Practice with tongue twisters**:\n        "    - E.g., 'She sells sea shells by the sea shore'."
+        "Here are 20 tips for common pronunciation challenges among ESL speakers:\n\n"
+        "1. **'th' sound**: Unvoiced 'th' in 'think' is soft; voiced 'th' in 'this' uses vocal cords.\n"
+        "2. **'v' vs 'w' sounds**: 'v' vibrates, while 'w' requires rounded lips.\n"
+        "3. **Silent letters**: Avoid pronouncing silent letters, like 'k' in 'know' or 'b' in 'thumb'.\n"
+        "4. **Final 'ed' sound**: Pronounce 'ed' in 'wanted' as /ɪd/, but 'played' as /d/.\n"
+        "5. **'r' sound**: In British English, it's soft or silent at the end of words like 'car'.\n"
+        "6. **Linking words**: British English links 'r' between words ('law and order').\n"
+        "7. **Stress patterns**: Stress syllables correctly, e.g., 'PREsent' (noun) vs 'preSENT' (verb).\n"
+        "8. **'s' vs 'z' sounds**: 's' in 'see' is voiceless, while 'z' in 'zoo' is voiced.\n"
+        "9. **'ch' vs 'sh' sounds**: 'ch' in 'chair' is hard, while 'sh' in 'share' is softer.\n"
+        "10. **'t' sound**: In British English, 't' is often crisp, not replaced with 'd'.\n"
+        "11. **Vowel length**: Contrast long ('sheep') and short ('ship') vowels.\n"
+        "12. **Consonant clusters**: Avoid adding extra vowels in 'school' or 'spring'.\n"
+        "13. **'l' sound**: The 'l' in 'little' is darker when at the end of syllables.\n"
+        "14. **Intonation**: Use rising intonation for questions and falling for statements.\n"
+        "15. **Word endings**: Pronounce 's' or 'es' endings correctly in plurals ('cats' vs 'dogs').\n"
+        "16. **Weak vowels**: The schwa /ə/ sound is common in unstressed syllables ('about').\n"
+        "17. **'h' sound**: Don't drop 'h' in words like 'hat' unless it's silent ('honest').\n"
+        "18. **'j' sound**: Pronounce 'j' in 'jump' clearly, not confused with 'y'.\n"
+        "19. **Compound words**: Stress the first word in compounds like 'blackboard'.\n"
+        "20. **Rhythm**: English is stress-timed, meaning stressed syllables are equally spaced.\n\n"
+        "Practice these tips regularly to improve your pronunciation!"
     )
     await update.message.reply_text(tips_text)
 
@@ -130,13 +112,13 @@ def main():
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
     app_bot.add_handler(CommandHandler("tips", tips))
-    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
     # Configure webhook
     app_bot.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 8443)),
-        url_path="",
+        url_path="",  # Optional, leave empty for default
         webhook_url="https://tunetalkbot.onrender.com"  # Replace with your Render URL
     )
 
@@ -144,10 +126,6 @@ def main():
 @app.route("/")
 def home():
     return "Bot is running!"
-
-@app.route("/ping")
-def ping():
-    return "pong"
 
 if __name__ == "__main__":
     main()
