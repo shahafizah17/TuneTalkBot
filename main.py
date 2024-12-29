@@ -5,7 +5,6 @@ from telegram.ext import CommandHandler, Application, CallbackContext, MessageHa
 from gtts import gTTS
 import json  # To store chat IDs
 import logging  # For logging
-import pyphen  # For syllable-based spelling
 
 # Flask app for the HTTP endpoint
 app = Flask(__name__)
@@ -46,7 +45,7 @@ async def start(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     await update.message.reply_text(
-        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips. For phonetic spelling, type /spell <word>."
+        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! Type /spell <word> to get its phonetic spelling. For pronunciation tips, type /tips."
     )
 
 # Function to handle pronunciation requests
@@ -74,6 +73,34 @@ async def pronounce(update: Update, context: CallbackContext):
     except Exception as e:
         logger.error(f"Error in pronunciation: {e}")
         await update.message.reply_text(f"Sorry, an error occurred: {e}")
+
+# Function to handle phonetic spelling requests
+async def spell(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    track_user(chat_id)  # Track the user's chat ID
+    text = " ".join(context.args).lower()
+    if not text or " " in text:
+        await update.message.reply_text(
+            "Please type a single word after the command, e.g., /spell apple."
+        )
+        return
+
+    # NATO Phonetic Alphabet for spelling
+    phonetic_dict = {
+        'a': 'Alpha', 'b': 'Bravo', 'c': 'Charlie', 'd': 'Delta', 'e': 'Echo',
+        'f': 'Foxtrot', 'g': 'Golf', 'h': 'Hotel', 'i': 'India', 'j': 'Juliet',
+        'k': 'Kilo', 'l': 'Lima', 'm': 'Mike', 'n': 'November', 'o': 'Oscar',
+        'p': 'Papa', 'q': 'Quebec', 'r': 'Romeo', 's': 'Sierra', 't': 'Tango',
+        'u': 'Uniform', 'v': 'Victor', 'w': 'Whiskey', 'x': 'X-ray', 'y': 'Yankee', 'z': 'Zulu'
+    }
+
+    phonetic_spelling = [phonetic_dict.get(char, char) for char in text if char.isalpha()]
+    if phonetic_spelling:
+        response = f"Phonetic spelling of '{text}': " + ", ".join(phonetic_spelling)
+    else:
+        response = "Please enter a valid English word to spell phonetically."
+
+    await update.message.reply_text(response)
 
 # Function to handle pronunciation tips
 async def tips(update: Update, context: CallbackContext):
@@ -126,24 +153,6 @@ async def tips(update: Update, context: CallbackContext):
     )
     await update.message.reply_text(tips_text)
 
-# Function to spell words phonetically
-async def spell(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    track_user(chat_id)  # Track the user's chat ID
-    word = "".join(context.args)
-    if not word:
-        await update.message.reply_text("Please provide a word to spell phonetically, e.g., /spell hello.")
-        return
-
-    try:
-        # Break the word into syllables
-        dic = pyphen.Pyphen(lang='en')
-        phonetic_spelling = dic.inserted(word)
-        await update.message.reply_text(f"Phonetic spelling of '{word}': {phonetic_spelling}")
-    except Exception as e:
-        logger.error(f"Error in spelling: {e}")
-        await update.message.reply_text(f"Sorry, an error occurred while processing the spelling.")
-
 # Initialize Telegram bot handlers
 def main():
     app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -151,8 +160,8 @@ def main():
     # Add handlers
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
-    app_bot.add_handler(CommandHandler("tips", tips))
     app_bot.add_handler(CommandHandler("spell", spell))
+    app_bot.add_handler(CommandHandler("tips", tips))
     app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
     # Configure webhook
