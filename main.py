@@ -45,7 +45,7 @@ async def start(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     track_user(chat_id)  # Track the user's chat ID
     await update.message.reply_text(
-        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! Type /spell <word> to get its phonetic spelling. For pronunciation tips, type /tips."
+        "Hi! I’m TuneTalkBot, here to help you with pronunciation. Type /pronounce <word> or <phrase>, and I’ll send an audio clip of the correct pronunciation! For pronunciation tips, type /tips. For a fun challenge, try /tonguetwisters."
     )
 
 # Function to handle pronunciation requests
@@ -73,34 +73,6 @@ async def pronounce(update: Update, context: CallbackContext):
     except Exception as e:
         logger.error(f"Error in pronunciation: {e}")
         await update.message.reply_text(f"Sorry, an error occurred: {e}")
-
-# Function to handle phonetic spelling requests
-async def spell(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    track_user(chat_id)  # Track the user's chat ID
-    text = " ".join(context.args).lower()
-    if not text or " " in text:
-        await update.message.reply_text(
-            "Please type a single word after the command, e.g., /spell apple."
-        )
-        return
-
-    # NATO Phonetic Alphabet for spelling
-    phonetic_dict = {
-        'a': 'Alpha', 'b': 'Bravo', 'c': 'Charlie', 'd': 'Delta', 'e': 'Echo',
-        'f': 'Foxtrot', 'g': 'Golf', 'h': 'Hotel', 'i': 'India', 'j': 'Juliet',
-        'k': 'Kilo', 'l': 'Lima', 'm': 'Mike', 'n': 'November', 'o': 'Oscar',
-        'p': 'Papa', 'q': 'Quebec', 'r': 'Romeo', 's': 'Sierra', 't': 'Tango',
-        'u': 'Uniform', 'v': 'Victor', 'w': 'Whiskey', 'x': 'X-ray', 'y': 'Yankee', 'z': 'Zulu'
-    }
-
-    phonetic_spelling = [phonetic_dict.get(char, char) for char in text if char.isalpha()]
-    if phonetic_spelling:
-        response = f"Phonetic spelling of '{text}': " + ", ".join(phonetic_spelling)
-    else:
-        response = "Please enter a valid English word to spell phonetically."
-
-    await update.message.reply_text(response)
 
 # Function to handle pronunciation tips
 async def tips(update: Update, context: CallbackContext):
@@ -153,6 +125,25 @@ async def tips(update: Update, context: CallbackContext):
     )
     await update.message.reply_text(tips_text)
 
+# Function to handle tongue twisters
+async def tonguetwisters(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    track_user(chat_id)  # Track the user's chat ID
+    tongue_twisters = (
+        "Try these tongue twisters to improve your pronunciation:\n\n"
+        "1. Peter Piper picked a peck of pickled peppers.\n"
+        "2. She sells seashells by the seashore.\n"
+        "3. How much wood would a woodchuck chuck if a woodchuck could chuck wood?\n"
+        "4. Betty Botter bought some butter, but she said the butter’s bitter.\n"
+        "5. I scream, you scream, we all scream for ice cream.\n"
+        "6. Red lorry, yellow lorry.\n"
+        "7. The thirty-three thieves thought that they thrilled the throne throughout Thursday.\n"
+        "8. A proper copper coffee pot.\n"
+        "9. Six slippery snails slid slowly seaward.\n"
+        "10. Can you can a can as a canner can can a can?"
+    )
+    await update.message.reply_text(tongue_twisters)
+
 # Initialize Telegram bot handlers
 def main():
     app_bot = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -160,8 +151,8 @@ def main():
     # Add handlers
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("pronounce", pronounce))
-    app_bot.add_handler(CommandHandler("spell", spell))
     app_bot.add_handler(CommandHandler("tips", tips))
+    app_bot.add_handler(CommandHandler("tonguetwisters", tonguetwisters))
     app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, _: track_user(update.message.chat_id)))  # Track all users
 
     # Configure webhook
